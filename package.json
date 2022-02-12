@@ -4,8 +4,16 @@
   "description": "Manage React forms state and automatic validation with mobx",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
   "repository": "https://github.com/Pewww/mobx-light-form.git",
   "author": "pewww <jung22337@naver.com>",
+  "keywords": [
+    "react mobx form",
+    "mobx",
+    "form",
+    "form management",
+    "mobx form"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc"
@@ -14,7 +22,7 @@
     "lodash.isempty": "^4.4.0"
   },
   "peerDependencies": {
-    "mobx": "^6.0.0"
+    "mobx": ">=6.0.0"
   },
   "devDependencies": {
     "@types/lodash.isempty": "^4.4.6",
