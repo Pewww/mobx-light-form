@@ -1,0 +1,23 @@
+{
+  "name": "mobx-light-form",
+  "version": "0.1.0",
+  "description": "Manage React forms state and automatic validation with mobx",
+  "main": "index.js",
+  "repository": "https://github.com/Pewww/mobx-light-form.git",
+  "author": "pewww <jung22337@naver.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "lodash.isempty": "^4.4.0"
+  },
+  "peerDependencies": {
+    "mobx": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/lodash.isempty": "^4.4.6",
+    "mobx": "^6.3.13",
+    "typescript": "^4.5.5"
+  }
+}
