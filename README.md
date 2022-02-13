@@ -1,14 +1,14 @@
-# Mobx Light Form
+# MobX Light Form
 
-### ✨ Mobx Form State Management with automatic validation
+### ✨ MobX Form State Management with automatic validation
 
 Seperate subjects which manage form data to prevent duplication of data and ensure consistency.<br>
 The basic principle of responsibility allocation is to allocate responsibility to objects with information that can perform responsibility, so that the form can take charge of the transformation of data to be sent from the client to the server.
 
-### [Demo](Demo)
+### [Demo](https://codesandbox.io/s/mobx-light-form-demo-wmnbd?file=/src/views/PersonBody.tsx)
 
 <div align="center">
-  <img src="https://user-images.githubusercontent.com/23455736/153736858-09b1cd3b-67db-4056-a73d-3b7d8c296b69.png" alt="예시 이미지" width="600">
+  <img src="https://user-images.githubusercontent.com/23455736/153737842-44843682-c1df-4d50-b3ec-54704598a01f.png" alt="예시 이미지" width="680">
 </div>
 
 ### 🔍️ Features
@@ -50,7 +50,7 @@ export default class PersonForm extends Form {
       key: 'name', // Required: Should be same as member field
       label: 'Name',
       isRequired: true, // Should not be empty
-      value: '' // Default value,
+      value: '', // Default value,
       validation: [
         /^Pewww.*$/, // Can be Regex or
         (v: string) => [ // Custom function - () => [boolean, ErrorMessage | undefined]
@@ -65,7 +65,7 @@ export default class PersonForm extends Form {
     });
   }
 
-  public toPersonDto() { // Convert data to be sent to the server here.
+  public toDto() { // Convert data to be sent to the server here.
     return {
       personName: this.name.value
     };
@@ -92,14 +92,14 @@ export default class BookForm extends Form {
 
     this.name = this.generateField<string>({
       key: 'name',
-      label: '책 이름',
+      label: 'Book Name',
       value: '',
       isRequired: true
     });
 
     this.author = this.generateField<string>({
       key: 'author',
-      label: '저자',
+      label: 'Author',
       value: ''
     });
 
@@ -112,9 +112,11 @@ export default class BookForm extends Form {
 ```
 
 ```typescript
-import { makeObservable, observable } from 'mobx';
+import { makeObservable, observable, action } from 'mobx';
 
 import Form, { FieldSource } from 'mobx-light-form';
+
+import BookForm from 'src';
 
 export default class PersonForm extends Form {
   // ...other fields
@@ -123,14 +125,20 @@ export default class PersonForm extends Form {
   constructor() {
     super();
 
-    this.favoriteBooks = [new BookForm()];
+    this.favoriteBooks = [];
 
     makeObservable(this, {
-      favoriteBooks: observable
+      favoriteBooks: observable,
+      addBook: action,
+      clearBooks: action
     });
   }
 
-  public clearBooks() { // If you need, override or create form methods.
+  public addBook() { // If you need, override or create form methods.
+    this.favoriteBooks.push(new BookForm());
+  }
+
+  public clearBooks() {
     this.favoriteBooks = [];
   }
 }
@@ -156,62 +164,86 @@ export default class PersonStore {
 // Please see Demo
 
 import React, { useCallback } from 'react';
-import PersonForm from 'src';
+import { observer } from 'mobx-react';
 
-const PersonBody = () => {
-  const { personStore } = getStore(); // The way you get mobx store
-  const { personForm } = personStore;
+import { usePersonStores } from '../stores/PersonProvider';
 
-  const handleChange = useCallback((fieldName: string) => (value: string) => {
-    personForm.update({
-      [fieldName]: value
-    });
-  }, [personForm]);
+import { Input, Button } from '../components';
+
+const PersonBody = observer(() => {
+  const { personStore } = usePersonStores(); // The way you get mobx store
+  const { personForm: form } = personStore;
+
+  const handleChange = useCallback(
+    (fieldName: string) => (value: string) => {
+      form.update({
+        [fieldName]: value
+      });
+    },
+    [form]
+  );
 
   const handleReset = useCallback(() => {
-    personForm.reset();
-  }, [personForm]);
+    form.reset();
+  }, [form]);
 
   const handleBookAdd = useCallback(() => {
-    personForm.favoriteBooks.push(
-      new PersonForm()
-    );
-  }, [personForm]);
+    form.addBook();
+  }, [form]);
 
   const handleBooksClear = useCallback(() => {
-    personForm.clearBooks();
-  }, [personForm]);
+    form.clearBooks();
+  }, [form]);
+
+  const handleSubmit = useCallback(() => {
+    console.log('Submit Result: ', form.toDto());
+  }, [form]);
 
   return (
     <Wrapper>
       <Input
-        value={personForm.name.value}
-        label={personForm.name.label}
-        onChange={handleChange('name')}
+        label={form.name.label}
+        value={form.name.value}
+        placeholder="Write name"
+        onChange={handleChange("name")}
       />
-      {personForm.favoriteBooks.map((form, index) => (
-        <React.Fragment key={form.__id}>
+      {!!form.errors.name && (
+        <ErrorMessage>{form.errors.name}</ErrorMessage>
+      )}
+      {form.favoriteBooks.map((f) => (
+        <FavoriteBookWrapper key={f.__id}>
           <Input
-            value={form.name.value}
-            label={form.name.label}
-            onChange={e => {
-              form.update({
-                name: e.target.value
+            placeholder="Write author"
+            label={f.author.label}
+            value={f.author.value}
+            onChange={(value) => {
+              f.update({
+                author: value
               });
             }}
           />
           <Input
-            value={form.author.value}
-            label={form.author.label}
-            disabled
+            placeholder="Write book name"
+            label={f.name.label}
+            value={f.name.value}
+            className="book-name"
+            onChange={(value) => {
+              f.update({
+                name: value
+              });
+            }}
           />
-        </React.Fragment>
+        </FavoriteBookWrapper>
       ))}
-      <Button onClick={handleReset}>Reset</Button>
-      <Button onClick={handleBooksClear}>Clear Books</Button>
+      <StyledButton onClick={handleReset}>Reset</StyledButton>
+      <StyledButton onClick={handleBookAdd}>Add Book</StyledButton>
+      <StyledButton onClick={handleBooksClear}>Clear Books</StyledButton>
+      <StyledButton onClick={handleSubmit} disabled={!form.isValid}>
+        Submit
+      </StyledButton>
     </Wrapper>
   );
-};
+});
 
 export default PersonBody;
 ```

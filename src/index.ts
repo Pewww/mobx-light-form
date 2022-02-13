@@ -17,7 +17,7 @@ type FormPrivateKeys = '_touched'
   | '_errors'
   | 'setErrors';
 
-export enum ERROR_MESSAGE {
+export enum ERROR_TYPE {
   KEY_NOT_EXISTS = 'Key should exists.',
   VALUE_NOT_REQUIRED = 'Value should be required.',
   VALUE_NOT_VALID = 'Value is not valid.'
@@ -86,7 +86,7 @@ export default class Form {
       const target = _ as FieldSource<any>;
 
       if (target.isRequired && isEmpty(target.value)) {
-        this._errors[key] = ERROR_MESSAGE.VALUE_NOT_REQUIRED;
+        this._errors[key] = ERROR_TYPE.VALUE_NOT_REQUIRED;
         return;
       }
 
@@ -101,8 +101,8 @@ export default class Form {
           const invalidItem = target.validation[invalidIdx];
 
           const errorMessage = typeof invalidItem === 'function'
-            ? invalidItem(target.value)[1] || ERROR_MESSAGE.VALUE_NOT_VALID
-            : ERROR_MESSAGE.VALUE_NOT_VALID;
+            ? invalidItem(target.value)[1] || ERROR_TYPE.VALUE_NOT_VALID
+            : ERROR_TYPE.VALUE_NOT_VALID;
   
           this._errors[key] = errorMessage;
           return;
@@ -181,7 +181,7 @@ export default class Form {
     key: string;
   }): FieldSource<T> {
     if (!options.key) {
-      throw new Error(ERROR_MESSAGE.KEY_NOT_EXISTS);
+      throw new Error(ERROR_TYPE.KEY_NOT_EXISTS);
     }
 
     this.addKey(options.key);
