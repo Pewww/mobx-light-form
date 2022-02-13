@@ -169,7 +169,7 @@ export default class Form {
   public reset() {
     this.keys.forEach(key => {
       Object.assign(this, {
-        [key]: this._initialValues[key]
+        [key]: this.initialValues[key]
       });
 
       this.setTouched(key, false);
