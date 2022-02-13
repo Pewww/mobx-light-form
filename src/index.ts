@@ -38,10 +38,14 @@ export default class Form {
 
   private _errors: Record<string, string | undefined> = {};
 
+  private __identifier: string;
+
   private readonly keys: string[];
 
   constructor() {
     this.keys = [];
+
+    this.__identifier = this.getUniqueId();
 
     makeObservable<Form, FormPrivateKeys>(this, {
       // observables
@@ -70,6 +74,10 @@ export default class Form {
     isRequired: false,
     validation: []
   };
+
+  public get __id() {
+    return this.__identifier;
+  }
 
   public get errors() {
     this.keys.forEach(key => {
@@ -208,5 +216,9 @@ export default class Form {
   
   private setErrors(key: string, value: string | undefined) {
     this._errors[key] = value;
+  }
+
+  private getUniqueId() {
+    return Math.random().toString(36).substr(2, 9);
   }
 }
