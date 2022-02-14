@@ -38,7 +38,7 @@ export default class Form {
 
   private _errors: Record<string, string | undefined> = {};
 
-  private __identifier: string;
+  private readonly __identifier: string;
 
   private readonly keys: string[];
 
