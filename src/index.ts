@@ -8,7 +8,12 @@ type CustomFuncValidation = (value: any) => [
   CustomErrorMessage | undefined
 ];
 
-type Validation = RegExp | CustomFuncValidation;
+type CustomAsyncFuncValidation = (value: any) => Promise<[
+  boolean,
+  CustomErrorMessage | undefined
+]>;
+
+type Validation = RegExp | CustomFuncValidation | CustomAsyncFuncValidation;
 
 type FormPrivateKeys = '_touched'
   | 'setTouched'
@@ -63,7 +68,8 @@ export default class Form {
       setErrors: action,
       addKey: action,
       update: action,
-      reset: action
+      reset: action,
+      validate: action
     });
   }
 
@@ -80,39 +86,6 @@ export default class Form {
   }
 
   public get errors() {
-    this.keys.forEach(key => {
-      // @ts-ignore
-      const _ = this[key];
-      const target = _ as FieldSource<any>;
-
-      if (target.isRequired && isEmpty(target.value)) {
-        this._errors[key] = ERROR_TYPE.VALUE_NOT_REQUIRED;
-        return;
-      }
-
-      if (!isEmpty(target.validation)) {
-        const invalidIdx = target.validation.findIndex(v =>
-          typeof v === 'function'
-            ? !v(target.value)[0]
-            : !v.test(target.value)
-        );
-
-        if (invalidIdx !== -1) {
-          const invalidItem = target.validation[invalidIdx];
-
-          const errorMessage = typeof invalidItem === 'function'
-            ? invalidItem(target.value)[1] || ERROR_TYPE.VALUE_NOT_VALID
-            : ERROR_TYPE.VALUE_NOT_VALID;
-  
-          this._errors[key] = errorMessage;
-          return;
-        }
-      }
-
-      // Set value(error) to undefined after passing all validations.
-      this._errors[key] = undefined;
-    });
-
     return this._errors;
   }
 
@@ -121,36 +94,14 @@ export default class Form {
   }
 
   public get isValid() {
-    for (const key of this.keys) {
-      // @ts-ignore
-      const _ = this[key];
-      const target = _ as FieldSource<any>;
-      
-      if (target.isRequired && isEmpty(target.value)) {
-        return false;
-      }
-
-      if (!isEmpty(target.validation)) {
-        const isAllValidationPassed = target.validation.every((v) =>
-          typeof v === 'function'
-            ? v(target.value)[0]
-            : v.test(target.value)
-        );
-
-        if (!isAllValidationPassed) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return Object.values(this._errors).every(e => e === undefined);
   }
 
   protected get initialValues() {
     return this._initialValues;
   }
 
-  public update(changes: Record<string, any>) {
+  public update(changes: Record<string, any>, withoutValidation?: boolean) {
     Object.keys(changes).forEach(key => {
       if (key in this) {
         Object.assign(this, {
@@ -162,6 +113,10 @@ export default class Form {
         });
         
         this.setTouched(key, true);
+
+        if (!withoutValidation) {
+          this.validateField(key);
+        }
       }
     });
   }
@@ -177,9 +132,18 @@ export default class Form {
     });
   }
 
-  protected generateField<T>(options: Partial<FieldSource<T>> & {
-    key: string;
-  }): FieldSource<T> {
+  public async validate() {
+    for (const key of this.keys) {
+      await this.validateField(key);
+    }
+  }
+
+  protected generateField<T>(
+    options: Partial<FieldSource<T>> & {
+      key: string;
+    },
+    withoutInitialValidation?: boolean
+  ): FieldSource<T> {
     if (!options.key) {
       throw new Error(ERROR_TYPE.KEY_NOT_EXISTS);
     }
@@ -199,6 +163,10 @@ export default class Form {
       [options.key]: initialValue
     };
 
+    if (!withoutInitialValidation) {
+      this.validateField(options.key, initialValue);
+    }
+
     return initialValue;
   }
 
@@ -216,6 +184,41 @@ export default class Form {
   
   private setErrors(key: string, value: string | undefined) {
     this._errors[key] = value;
+  }
+
+  private async validateField(key: string, _target?: FieldSource<any>) {
+    // @ts-ignore
+    const _ = this[key];
+    const target = _target ?? _ as FieldSource<any>;
+
+    if (target.isRequired && isEmpty(target.value)) {
+      this._errors[key] = ERROR_TYPE.VALUE_NOT_REQUIRED;
+      return;
+    }
+
+    if (!isEmpty(target.validation)) {
+      for (const v of target.validation) {
+        const validationResult = await (typeof v === 'function'
+          ? v(target.value)
+          : v.test(target.value)
+        );
+
+        // For function validation result
+        if (Array.isArray(validationResult) && !validationResult[0]) {
+          this._errors[key] = validationResult[1] || ERROR_TYPE.VALUE_NOT_VALID;
+          return;
+        }
+
+        // For regex validation result
+        if (!validationResult) {
+          this._errors[key] = ERROR_TYPE.VALUE_NOT_VALID;
+          return;
+        }
+      }
+    }
+
+    // Set value(error) to undefined after passing all validations.
+    this._errors[key] = undefined;
   }
 
   private getUniqueId() {
