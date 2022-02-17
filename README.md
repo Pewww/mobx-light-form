@@ -62,7 +62,6 @@ export default class PersonForm extends Form {
       ]
     });
 
-    // If you want to use asynchronous validation
     const TestAPI = {
       checkIsAvailable: (value: string) => {
         const existingNicknames = [
@@ -87,6 +86,7 @@ export default class PersonForm extends Form {
         label: 'Nickname',
         value: '',
         validation: [
+          // If you want to use asynchronous validation
           async (v: string) => {
             const isAvailableNickname = await TestAPI.checkIsAvailable(v);
 
