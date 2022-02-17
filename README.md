@@ -43,6 +43,8 @@ import Form, { FieldSource } from 'mobx-light-form';
 export default class PersonForm extends Form {
   public name: FieldSource<string>;
 
+  public nickname: FieldSource<string>;
+
   constructor() {
     super();
 
@@ -53,21 +55,58 @@ export default class PersonForm extends Form {
       value: '', // Default value,
       validation: [
         /^Pewww.*$/, // Can be Regex or
-        (v: string) => [ // Custom function - () => [boolean, ErrorMessage | undefined]
+        (v: string) => [ // function - () => [boolean, ErrorMessage | undefined]
           v === 'Pewwwww',
           "Should be 'Pewwwww'"
         ]
       ]
     });
 
+    // If you want to use asynchronous validation
+    const TestAPI = {
+      checkIsAvailable: (value: string) => {
+        const existingNicknames = [
+          'AAA',
+          'BBB',
+          'CCC',
+          'DDD',
+          'EEE'
+        ];
+
+        return new Promise(resolve => {
+          setTimeout(() => {
+            resolve(!existingNicknames.includes(value));
+          }, 200);
+        });
+      }
+    };
+
+    this.nickname = this.generateField<string>(
+      {
+        key: 'nickname',
+        label: 'Nickname',
+        value: '',
+        validation: [
+          async (v: string) => {
+            const isAvailableNickname = await TestAPI.checkIsAvailable(v);
+
+            return [isAvailableNickname, 'Your nickname already exists.'];
+          }
+        ]
+      },
+      true // Prevent initial validation
+    );
+
     makeObservable(this, {
-      name: observable
+      name: observable,
+      nickname: observable
     });
   }
 
   public toDto() { // Convert data to be sent to the server here.
     return {
-      personName: this.name.value
+      personName: this.name.value,
+      nickname: this.nickname.value
     };
   }
 }
@@ -165,6 +204,7 @@ export default class PersonStore {
 
 import React, { useCallback } from 'react';
 import { observer } from 'mobx-react';
+import debounce from 'lodash.debounce';
 
 import { usePersonStores } from '../stores/PersonProvider';
 
@@ -182,6 +222,21 @@ const PersonBody = observer(() => {
     },
     [form]
   );
+
+  const debouncedValidate = useCallback(debounce(() => {
+    form.validate(); // Trigger validation when you need
+  }, 500), [form]);
+
+  const handleNicknameChange = useCallback((value: string) => {
+    form.update(
+      {
+        nickname: value
+      },
+      true // Prevent validation
+    );
+
+    debouncedValidate();
+  }, [form, debouncedValidate]);
 
   const handleReset = useCallback(() => {
     form.reset();
@@ -209,6 +264,15 @@ const PersonBody = observer(() => {
       />
       {!!form.errors.name && (
         <ErrorMessage>{form.errors.name}</ErrorMessage>
+      )}
+      <Input
+        label={form.nickname.label}
+        value={form.nickname.value}
+        placeholder="Write nickname"
+        onChange={handleNicknameChange}
+      />
+      {!!form.errors.nickname && (
+        <ErrorMessage>{form.errors.nickname}</ErrorMessage>
       )}
       {form.favoriteBooks.map((f) => (
         <FavoriteBookWrapper key={f.__id}>
