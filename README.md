@@ -5,35 +5,35 @@
 Seperate subjects which manage form data to prevent duplication of data and ensure consistency.<br>
 The basic principle of responsibility allocation is to allocate responsibility to objects with information that can perform responsibility, so that the form can take charge of the transformation of data to be sent from the client to the server.
 
-### [Demo](https://codesandbox.io/s/mobx-light-form-demo-wmnbd?file=/src/views/PersonBody.tsx)
+## [Demo](https://codesandbox.io/s/mobx-light-form-demo-wmnbd?file=/src/views/PersonBody.tsx)
 
 <div align="center">
   <img src="https://user-images.githubusercontent.com/23455736/153737842-44843682-c1df-4d50-b3ec-54704598a01f.png" alt="예시 이미지" width="680">
 </div>
 
-### 🔍️ Features
+## 🔍️ Features
 
-- Form update and reset
+- Form update, reset and clear
 - Check form is valid or has some errors
 - To be added
 
-### ⚙ Install
+## ⚙ Install
 
-#### npm
+### npm
 
 ```
 npm install mobx-light-form
 ```
 
-#### yarn
+### yarn
 
 ```
 yarn add mobx-light-form
 ```
 
-### 🚀 Quick Start
+## 🚀 Quick Start
 
-#### 1-a. Define Form
+### 1-a. Define Form
 
 ```typescript
 import { makeObservable, observable } from 'mobx';
@@ -112,7 +112,7 @@ export default class PersonForm extends Form {
 }
 ```
 
-#### 1-b. Define Form with array value
+### 1-b. Define Form with array value
 
 > Define another form to be an item of array.
 
@@ -183,7 +183,7 @@ export default class PersonForm extends Form {
 }
 ```
 
-#### 2. Register form in store
+### 2. Register form in store
 
 ```typescript
 import PersonForm from 'src';
@@ -197,7 +197,7 @@ export default class PersonStore {
 }
 ```
 
-#### 3. Handle Input values
+### 3. Handle Input values
 
 ```tsx
 // Please see Demo
@@ -311,3 +311,14 @@ const PersonBody = observer(() => {
 
 export default PersonBody;
 ```
+
+## FAQ
+
+### 1. What is the difference between `reset` and `clear`?
+
+If you 'reset', it initializes all fields and then initializes both 'touched' and 'errors' properties.<br>
+The value of 'isValid' may not be set properly because 'errors' property is initialized(`undefined`).<br>
+It is recommended to run the 'validate' method at a certain point in time to check the validation.
+
+On the other hand, If you 'clear', it initialized all fields and then initialized 'touched' property, but it does not initialize 'errors' property.<br>
+Since validation is checked internally after all fields are initialized, it is recommended to use it when it is necessary to check 'isValid' from the beginning.
