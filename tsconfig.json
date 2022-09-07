@@ -18,6 +18,8 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "coverage",
+    "src/index.test.ts"
   ]
 }

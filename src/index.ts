@@ -33,6 +33,7 @@ export interface FieldSource<T> {
   label: string;
   value: T;
   isRequired: boolean;
+  requiredMessage?: string;
   validation: Validation[];
 }
 
@@ -68,6 +69,7 @@ export default class Form {
       setErrors: action,
       addKey: action,
       update: action,
+      clear: action,
       reset: action,
       validate: action
     });
@@ -78,6 +80,7 @@ export default class Form {
     label: '',
     value: '',
     isRequired: false,
+    requiredMessage: undefined,
     validation: []
   };
 
@@ -118,6 +121,17 @@ export default class Form {
           this.validateField(key);
         }
       }
+    });
+  }
+
+  public clear() {
+    this.keys.forEach(key => {
+      Object.assign(this, {
+        [key]: this._initialValues[key]
+      });
+
+      this.setTouched(key, false);
+      this.validateField(key, this._initialValues[key] as FieldSource<any>);
     });
   }
 
@@ -192,7 +206,7 @@ export default class Form {
     const target = _target ?? _ as FieldSource<any>;
 
     if (target.isRequired && isEmpty(target.value)) {
-      this._errors[key] = ERROR_TYPE.VALUE_NOT_REQUIRED;
+      this._errors[key] = target.requiredMessage ?? ERROR_TYPE.VALUE_NOT_REQUIRED;
       return;
     }
 
