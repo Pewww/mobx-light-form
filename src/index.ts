@@ -69,6 +69,7 @@ export default class Form {
       setErrors: action,
       addKey: action,
       update: action,
+      clear: action,
       reset: action,
       validate: action
     });
@@ -120,6 +121,17 @@ export default class Form {
           this.validateField(key);
         }
       }
+    });
+  }
+
+  public clear() {
+    this.keys.forEach(key => {
+      Object.assign(this, {
+        [key]: this._initialValues[key]
+      });
+
+      this.setTouched(key, false);
+      this.validateField(key, this._initialValues[key] as FieldSource<any>);
     });
   }
 
