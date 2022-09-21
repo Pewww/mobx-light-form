@@ -270,6 +270,43 @@ describe('mobx-light-form', () => {
       expect(fooForm.touched.foo).toBe(false);
     });
 
+    // untouch()
+    it("untouch() - reset 'touched' property of a particular field to false", () => {
+      const fooForm = new FooForm();
+
+      fooForm.update({
+        foo: 'test'
+      });
+
+      expect(fooForm.touched.foo).toBe(true);
+
+      fooForm.untouch('foo');
+
+      expect(fooForm.touched.foo).toBe(false);
+    });
+
+    // untouchAll()
+    it("untouchAll() - reset 'touched' property of all fields to false", () => {
+      const fooForm = new FooForm();
+
+      fooForm.update({
+        foo: 'test',
+        bar: 'b'
+      });
+
+      expect(fooForm.touched).toEqual({
+        foo: true,
+        bar: true
+      });
+
+      fooForm.untouchAll();
+
+      expect(fooForm.touched).toEqual({
+        foo: false,
+        bar: false
+      });
+    });
+
     // validate()
     it("validate() - 'isValid' should be false if value is falsy when 'isRequired' option is true", async () => {
       const fooForm = new FooForm();

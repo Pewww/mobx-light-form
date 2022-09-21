@@ -71,6 +71,8 @@ export default class Form {
       update: action,
       clear: action,
       reset: action,
+      untouch: action,
+      untouchAll: action,
       validate: action
     });
   }
@@ -143,6 +145,18 @@ export default class Form {
 
       this.setTouched(key, false);
       this.setErrors(key, undefined);
+    });
+  }
+
+  public untouch(key: string) {
+    if (key in this) {
+      this.setTouched(key, false);
+    }
+  }
+
+  public untouchAll() {
+    this.keys.forEach(key => {
+      this.setTouched(key, false);
     });
   }
 
