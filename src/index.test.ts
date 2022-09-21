@@ -202,16 +202,41 @@ describe('mobx-light-form', () => {
       expect(fooForm.touched.bar).toBe(true);
     });
 
+    it("update() - update field but it should not validate when 'withoutValidation' option is true", () => {
+      const fooForm1 = new FooForm();
+      const fooForm2 = new FooForm();
+
+      // @ts-ignore
+      const spyOnValidateField1 = jest.spyOn(fooForm1, 'validateField');
+      // @ts-ignore
+      const spyOnValidateField2 = jest.spyOn(fooForm2, 'validateField');
+
+      fooForm1.update({
+        foo: 'test'
+      });
+
+      expect(spyOnValidateField1).toBeCalled();
+
+      fooForm2.update({
+        foo: 'test'
+      }, true);
+
+      expect(spyOnValidateField2).not.toBeCalled();
+    });
+
     // reset()
-    it("reset() - reset all fields and reset 'touched', 'errors' status", () => {
+    it("reset() - reset all fields and reset 'touched', 'errors' status", async () => {
       const fooForm = new FooForm();
 
       fooForm.update({
         foo: 'abcde'
       });
 
+      // Since the error is updated asynchronously, check validation first and synchronize
+      await fooForm.validate();
+
       expect(fooForm.foo.value).toBe('abcde');
-      expect(fooForm.errors.foo).not.toBe(undefined);
+      expect(fooForm.errors.foo).toBe('maxLength error');
       expect(fooForm.touched.foo).toBe(true);
 
       fooForm.reset();
@@ -222,21 +247,26 @@ describe('mobx-light-form', () => {
     });
 
     // clear()
-    it("clear() - reset all fields and reset 'touched' status, validate after resetting", () => {
+    it("clear() - reset all fields and reset 'touched' status, validate after resetting", async () => {
       const fooForm = new FooForm();
 
       fooForm.update({
         foo: 'abcde'
       });
 
+      // Same purpose as line 218
+      await fooForm.validate();
+
       expect(fooForm.foo.value).toBe('abcde');
-      expect(fooForm.errors.foo).not.toBe(undefined);
+      expect(fooForm.errors.foo).toBe('maxLength error');
       expect(fooForm.touched.foo).toBe(true);
 
       fooForm.clear();
+      // Same purpose as line 218
+      await fooForm.validate();
 
       expect(fooForm.foo.value).toBe('');
-      expect(fooForm.errors.foo).not.toBe(undefined);
+      expect(fooForm.errors.foo).toBe('Value should be required.');
       expect(fooForm.touched.foo).toBe(false);
     });
 
